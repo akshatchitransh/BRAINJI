@@ -1,5 +1,6 @@
 import express, { urlencoded } from "express"
 import cors from "cors"
+ import authRoutes from "./routes/auth.route.js"
 
 const app = express();
 
@@ -8,6 +9,8 @@ app.use(cors())
 app.use(express.json({limit:"16kb"}))
 app.use(urlencoded());
 app.use(express.static("public"))
+app.use("/api/auth",authRoutes)
+
 
 
 
