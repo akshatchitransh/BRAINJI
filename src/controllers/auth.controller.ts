@@ -51,10 +51,17 @@ if(!checkuser) return res.json({msg:"user not exist"})
     const np = checkuser.password
    const check= bcrypt.compareSync(password,np); 
     if(!check) return res.json({msg:"wrong credentials"})
+      const secret = process.env.jwtkey
+
+
+if(!secret){
+    return res.json({msg:"no secret"})
+
+}
         
         const token = jwt.sign({
             id:checkuser._id
-        },"process.env.jwtkey")
+        },secret)
 
         return res.json({msg:"login done",token})
     

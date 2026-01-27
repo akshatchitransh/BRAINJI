@@ -10,9 +10,21 @@ export const userModel = model("Users",userSchema)
 
 const ContentSchema = new mongoose.Schema({
     title : String,
-    linnk : String,
+    link : String,
     tags : [{type:mongoose.Types.ObjectId , ref:'Tag'}],
     userId : {type: mongoose.Types.ObjectId , ref :'Users', required: true},
+    role: {
+  type: String,
+  enum: ["A", "B", "C"],
+}
+
     
-})
+},{timestamps:true})
 export const contentModel = model("Contents",ContentSchema)
+
+const linksSchema = new mongoose.Schema({
+  hash : String,
+  userId : {type : mongoose.Types.ObjectId , ref:"Users",required:true,  unique:true},
+
+})
+export const LinkModel = model("links",linksSchema)

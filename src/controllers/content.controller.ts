@@ -1,14 +1,27 @@
 import type { Request,Response } from "express";
-import { contentModel } from "../model/user.model.js";
+import { contentModel, LinkModel } from "../model/user.model.js";
+import { random } from "../utils.js";
+import mongoose from "mongoose";
 
+ 
 
-export const content =async (req:Request,res:Response)=>{
+export const content =async (req:any,res:Response)=>{
+ 
 const link = req.body.link
-const type = req.body.type
+const role = req.body.type
+
+const userid = req.userId;
+if (!userid) {
+  return res.status(401).json({ msg: "Unauthorized" });
+}
+
+const useriid = new mongoose.Types.ObjectId(userid);
+
+
 await contentModel.create({
 link,
-type,
-userId:req.userId,
+role,
+userId:useriid,
 tags:[]
 })
 
@@ -18,24 +31,58 @@ return res.json({
 }
 
 
-export const getcontent =async (req:Request,res:Response)=>{
-    const userid = req.userid;
-    const content = await contentModel.find({
-        userid : userid
-    }).populate("userid")
 
-    res.json({
-        content
-    })
-
+export const getcontent = async (req: any, res: Response) => {
+ const userid = req.userId;
+if (!userid) {
+  return res.status(401).json({ msg: "Unauthorized" });
 }
 
-export const deletecontent = async(req:Request,res:Response)=>{
-    const contentid = req.body.contentid;
-    
+const useriid = new mongoose.Types.ObjectId(userid);
 
-    await contentModel.deleteMany({
-        contentid,
-        req.userId
-    })
+  const content = await contentModel.find({
+    userId: useriid
+  }).populate("userId");
+
+  res.json({ content });
+};
+
+
+export const deletecontent = async (req: any, res: Response) => {
+  const userid = req.userId;
+  if (!userid) {
+    return res.status(401).json({ msg: "Unauthorized" });
+  }
+
+  await contentModel.deleteOne({
+    _id: req.body.contentid,
+    userId: userid
+  });
+
+  res.json({ msg: "content deleted" });
+};
+
+
+export const sharing = async(req:any, res:Response)=>{
+
+    const share = req.body.share;
+    const userid = req.userId;
+if (!userid) {
+  return res.status(401).json({ msg: "Unauthorized" });
+}
+
+const useriid = new mongoose.Types.ObjectId(userid);
+
+    if(share){
+        await LinkModel.create({
+            userId:useriid,
+            hash:random(10)
+        })
+    }
+    else {
+        await LinkModel.deleteOne({
+            userid:req.userId
+        })
+    }
+
 }
