@@ -13,10 +13,7 @@ const ContentSchema = new mongoose.Schema({
     link : String,
     tags : [{type:mongoose.Types.ObjectId , ref:'Tag'}],
     userId : {type: mongoose.Types.ObjectId , ref :'Users', required: true},
-    role: {
-  type: String,
-  enum: ["A", "B", "C"],
-}
+type:String,
 
     
 },{timestamps:true})

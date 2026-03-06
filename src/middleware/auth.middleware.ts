@@ -4,8 +4,10 @@ import type{ Request ,Response,NextFunction } from "express"
 
 export const authmiddleware = (req:any,res:Response,next:NextFunction)=>{
 const header = req.headers.authorization 
-if(!header) return res.json({msg:"no token"})
-    const token = header.split(" ")[1]
+
+if(!header) return res.json({msg:"no header"})
+    const token = header
+
 const secret = process.env.jwtkey
 if(!token) return res.json({msg:"no token"})
 
