@@ -54,12 +54,12 @@ const useriid = new mongoose.Types.ObjectId(userid);
 
 export const deletecontent = async (req: any, res: Response) => {
 const titletodelete = req.body.title;
-console.log("che1")
+
   await contentModel.deleteOne({
    
    title:titletodelete
   });
-  console.log("che1")
+  
 
   res.json({ msg: "content deleted" });
 };
