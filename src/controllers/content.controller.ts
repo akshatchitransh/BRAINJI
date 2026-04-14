@@ -53,15 +53,13 @@ const useriid = new mongoose.Types.ObjectId(userid);
 
 
 export const deletecontent = async (req: any, res: Response) => {
-  const userid = req.userId;
-  if (!userid) {
-    return res.status(401).json({ msg: "Unauthorized" });
-  }
-
+const titletodelete = req.body.title;
+console.log("che1")
   await contentModel.deleteOne({
-    _id: req.body.contentid,
-    userId: userid
+   
+   title:titletodelete
   });
+  console.log("che1")
 
   res.json({ msg: "content deleted" });
 };
