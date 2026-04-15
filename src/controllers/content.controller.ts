@@ -3,6 +3,50 @@ import { contentModel, LinkModel, userModel } from "../model/user.model.js";
 import { random } from "../utils.js";
 import mongoose from "mongoose";
 import { populate } from "dotenv";
+import { pipeline } from "@xenova/transformers";
+import { Pinecone } from "@pinecone-database/pinecone";
+
+
+async function run(title:any) {
+  const pc = new Pinecone({
+    //@ts-ignore
+    apiKey: process.env.PINECONE_API_KEY,
+  });
+
+  // ✅ correct
+  const namespace = pc.index("tweets-index","https://tweets-index-a5igeas.svc.aped-4627-b74a.pinecone.io");
+
+  const extractor = await pipeline(
+    "feature-extraction",
+    "Xenova/all-MiniLM-L6-v2"
+  );
+
+  const text = title;
+
+  const output = await extractor(text, {
+    pooling: "mean",
+    normalize: true,
+  });
+
+  const embedding = Array.from(output.data);
+
+  console.log("Embedding length:", embedding.length);
+
+  // ✅ FINAL FIX
+   await namespace.upsert({
+    records: [
+      {
+        id: "tweet-1",
+        values: embedding,
+        metadata: { text },
+      },
+    ],
+  });
+
+  console.log("embedding generated");
+}
+
+
 
  
 
@@ -28,6 +72,10 @@ type,
 userId:useriid,
 tags:[]
 })
+
+
+run(title);
+
 
 return res.json({
     msg:"content added"
