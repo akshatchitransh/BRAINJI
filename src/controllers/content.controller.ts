@@ -6,8 +6,8 @@ import { populate } from "dotenv";
 import { pipeline } from "@xenova/transformers";
 import { Pinecone } from "@pinecone-database/pinecone";
 
-
-async function run(title:any) {
+let count = 1;
+async function run(title:any , contentId:any) {
   const pc = new Pinecone({
     //@ts-ignore
     apiKey: process.env.PINECONE_API_KEY,
@@ -36,12 +36,13 @@ async function run(title:any) {
    await namespace.upsert({
     records: [
       {
-        id: "tweet-1",
+        id: contentId.toString(),
         values: embedding,
         metadata: { text },
       },
     ],
   });
+  count ++;
 
   console.log("embedding generated");
 }
@@ -64,18 +65,15 @@ if (!userid) {
 const useriid = new mongoose.Types.ObjectId(userid);
 
 
-await contentModel.create({
+const newContent = await contentModel.create({
   title,
-link,
+  link,
+  type,
+  userId: useriid,
+  tags: []
+});
 
-type,
-userId:useriid,
-tags:[]
-})
-
-
-run(title);
-
+await run(title, newContent._id);
 
 return res.json({
     msg:"content added"
@@ -150,9 +148,9 @@ return res.json({"msg":"link access denied"})}
     return res.json({"msg":"no content"})
     return;
   }
-  const content = contentModel.findOne({
-    userId:links.userId
-  })
+const content = await contentModel.find({
+  userId: links.userId
+});
   const userinfo = await userModel.findOne({
     _id:links.userId
   })
@@ -170,3 +168,58 @@ content: content
 
 
   }
+
+ export const searchContent = async (req: any, res: Response) => {
+  try {
+    const { query } = req.body;
+
+    if (!query) {
+      return res.status(400).json({
+        msg: "Search query is required",
+      });
+    }
+
+    const pc = new Pinecone({
+      //@ts-ignore
+      apiKey: process.env.PINECONE_API_KEY,
+    });
+
+    const namespace = pc.index(
+      "tweets-index",
+      "https://tweets-index-a5igeas.svc.aped-4627-b74a.pinecone.io"
+    );
+
+    const extractor = await pipeline(
+      "feature-extraction",
+      "Xenova/all-MiniLM-L6-v2"
+    );
+
+    const output = await extractor(query, {
+      pooling: "mean",
+      normalize: true,
+    });
+
+    const embedding = Array.from(output.data);
+
+    const result = await namespace.query({
+      vector: embedding,
+      topK: 5,
+    });
+
+    // IDs nikalo
+    const ids = result.matches?.map((match: any) => match.id) || [];
+
+    // MongoDB se poore documents lao
+    const contents = await contentModel.find({
+      _id: { $in: ids },
+    });
+
+    return res.json(contents);
+  } catch (err) {
+    console.log(err);
+
+    return res.status(500).json({
+      msg: "Something went wrong",
+    });
+  }
+};
